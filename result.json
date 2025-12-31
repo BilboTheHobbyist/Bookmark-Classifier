@@ -1,10 +1,12 @@
 {
     "https://www.python.org": {
-        "language": "en",
-        "category": "unknown"
+        "language": "unknown",
+        "category": "unknown",
+        "title": "Welcome to Python.org"
     },
-    "https://www.lequipe.fr": {
+    "https://www.lemonde.fr": {
         "language": "fr",
-        "category": "unknown"
+        "category": "Education",
+        "title": "Le Monde.fr - Actualités et Infos en France et dans le monde"
     }
 }

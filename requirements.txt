@@ -2,3 +2,5 @@ spacy>=3.5.0
 spacy-langdetect
 beautifulsoup4
 requests
+newspaper3k
+lxml_html_clean
