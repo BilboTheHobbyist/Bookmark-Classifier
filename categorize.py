@@ -8,6 +8,22 @@ from scrape_filter_link import LinkScraper
 
 DEBUG = True   # set to False to disable debug output
 
+# add tokenization
+def tokenize(text, nlp):
+    """
+    Returns a set of normalized tokens:
+    - lowercase
+    - lemmatized
+    - alphabetic
+    - no stopwords
+    """
+    doc = nlp(text)
+    return {
+        token.lemma_.lower()
+        for token in doc
+        if token.is_alpha and not token.is_stop
+    }
+
 # --------------------------
 # Register language detector
 # --------------------------
@@ -41,32 +57,31 @@ def detect_language(text):
 # Categorization (keyword-based, original spirit)
 # --------------------------
 def categorize(text, corpus, lang):
+    nlp = nlp_en if lang == "en" else nlp_fr
+
+    text_tokens = tokenize(text, nlp)
+
     best_category = "unknown"
     max_score = 0
 
-    text_lower = text.lower()
-
     if DEBUG:
-        print("\n--- DEBUG: Categorization ---")
-        print(f"Language: {lang}")
-        print(f"Text length: {len(text)} characters")
+        print("\n--- DEBUG: Token-based categorization ---")
+        print(f"Text tokens ({len(text_tokens)}): {sorted(list(text_tokens))[:30]}")
 
     for category, docs in corpus[lang].items():
-        matched = []
         score = 0
+        matched_tokens = set()
 
-        for d in docs:
-            if d.lower() in text_lower:
-                score += 1
-                matched.append(d)
+        for doc in docs:
+            doc_tokens = tokenize(doc, nlp)
+            overlap = text_tokens & doc_tokens
+            score += len(overlap)
+            matched_tokens |= overlap
 
         if DEBUG:
             print(f"\nCategory: {category}")
             print(f"  Score: {score}")
-            if matched:
-                print(f"  Matched keywords: {matched}")
-            else:
-                print("  Matched keywords: NONE")
+            print(f"  Matched tokens: {sorted(matched_tokens) if matched_tokens else 'NONE'}")
 
         if score > max_score:
             max_score = score
