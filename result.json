@@ -1,0 +1,10 @@
+{
+    "https://www.python.org": {
+        "language": "en",
+        "category": "unknown"
+    },
+    "https://www.lequipe.fr": {
+        "language": "fr",
+        "category": "unknown"
+    }
+}

@@ -1,0 +1,4 @@
+spacy>=3.5.0
+spacy-langdetect
+beautifulsoup4
+requests
