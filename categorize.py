@@ -24,18 +24,12 @@ nlp_fr.add_pipe("language_detector", last=True)
 # Detect Language Dynamically
 # --------------------------
 def detect_language(text):
-    """
-    Detect language using both English and French pipelines.
-    Returns 'en', 'fr', or 'unknown'.
-    """
     doc_en = nlp_en(text)
     doc_fr = nlp_fr(text)
 
-    # Get confidence scores
     score_en = doc_en._.language.get("score", 0)
     score_fr = doc_fr._.language.get("score", 0)
 
-    # Pick the pipeline with higher confidence
     if score_en > score_fr and doc_en._.language['language'] == "en":
         return "en"
     elif score_fr > score_en and doc_fr._.language['language'] == "fr":
@@ -44,7 +38,7 @@ def detect_language(text):
         return "unknown"
 
 # --------------------------
-# Categorize bookmark
+# Categorize bookmark using similarity
 # --------------------------
 def categorize_bookmark(title, description, corpus):
     text = f"{title} {description}"
@@ -52,13 +46,29 @@ def categorize_bookmark(title, description, corpus):
     if lang == "unknown":
         return "unknown"
     
+    if lang == "en":
+        nlp = nlp_en
+    else:
+        nlp = nlp_fr
+
+    doc_text = nlp(text)
     best_category = "unknown"
     max_score = 0
+
     for category, docs in corpus[lang].items():
-        score = sum(1 for doc in docs if doc.lower() in text.lower())
-        if score > max_score:
-            max_score = score
+        if not docs:
+            continue
+        # Compute average similarity with corpus documents
+        similarities = [doc_text.similarity(nlp(doc)) for doc in docs]
+        avg_sim = sum(similarities) / len(similarities)
+        if avg_sim > max_score:
+            max_score = avg_sim
             best_category = category
+
+    # Optional: threshold to avoid misclassification
+    if max_score < 0.3:
+        return "unknown"
+
     return best_category
 
 # --------------------------
