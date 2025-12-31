@@ -37,21 +37,43 @@ nlp_en.add_pipe("language_detector", last=True)
 nlp_fr = spacy.load("fr_core_news_sm")
 nlp_fr.add_pipe("language_detector", last=True)
 
+# Language detection pipeline (language-agnostic)
+nlp_langdetect = spacy.blank("xx")
+nlp_langdetect.add_pipe("language_detector")
+
 # --------------------------
 # Language detection
 # --------------------------
-def detect_language(text):
-    doc_en = nlp_en(text)
-    doc_fr = nlp_fr(text)
+def detect_language(text, min_len=200, en_threshold=0.80):
+    """
+    Deterministic language detection:
+    - Defaults to French
+    - Switches to English only if confidently detected
+    """
 
-    score_en = doc_en._.language.get("score", 0)
-    score_fr = doc_fr._.language.get("score", 0)
-
-    if score_en > score_fr and doc_en._.language["language"] == "en":
-        return "en"
-    if score_fr > score_en and doc_fr._.language["language"] == "fr":
+    if not text or len(text) < min_len:
         return "fr"
-    return "unknown"
+
+    try:
+        doc = nlp_langdetect(text)
+        lang = doc._.language.get("language")
+        score = doc._.language.get("score", 0)
+
+        if DEBUG:
+            print(f"Language detect → {lang} ({score:.2f})")
+
+        if lang == "en" and score >= en_threshold:
+            return "en"
+
+        if lang == "fr":
+            return "fr"
+
+    except Exception as e:
+        if DEBUG:
+            print(f"Language detection error: {e}")
+
+    # Default fallback
+    return "fr"
 
 # --------------------------
 # Categorization (keyword-based, original spirit)
