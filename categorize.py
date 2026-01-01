@@ -5,6 +5,32 @@ from spacy.language import Language
 from spacy_langdetect import LanguageDetector
 from get_corpus import load_corpus
 from scrape_filter_link import LinkScraper
+import os
+
+RESULT_FILE = "result.json"
+
+def load_results():
+    if not os.path.exists(RESULT_FILE):
+        return []
+
+    if os.path.getsize(RESULT_FILE) == 0:
+        return []
+
+    with open(RESULT_FILE, encoding="utf-8") as f:
+        data = json.load(f)
+
+    # MIGRATION GUARD
+    if isinstance(data, dict):
+        print("⚠ result.json is a dict, converting to list format")
+        return [
+            {"url": url, **value}
+            for url, value in data.items()
+        ]
+
+    if isinstance(data, list):
+        return data
+
+    raise ValueError("Invalid result.json format")
 
 DEBUG = True   # set to False to disable debug output
 
@@ -74,6 +100,13 @@ def detect_language(text, min_len=200, en_threshold=0.80):
 
     # Default fallback
     return "fr"
+
+def append_result(entry):
+    results = load_results()
+    results.append(entry)
+
+    with open(RESULT_FILE, "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
 
 # --------------------------
 # Categorization (keyword-based, original spirit)
@@ -164,5 +197,12 @@ if __name__ == "__main__":
 
         print(f"{url} → {lang} / {category}")
 
-    with open("result.json", "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=4)
+        result = {
+        "url": url,
+        "language": lang,
+        "category": category,
+        "title": data["title"]
+         }
+
+        append_result(result)
+
